@@ -135,6 +135,9 @@ function App() {
           series: [{
             name: 'All data pointlessly combined',
             data: data?.value || []
+          }],
+          xAxis: [{
+            categories: Object.keys(data?.dimension.Tid.category.index)
           }]
         }}></HighchartsReact>
       </Grid>
