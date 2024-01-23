@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import axios from 'axios';
-import { FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Button, FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -21,6 +21,8 @@ type FilterObj = {
   }
 };
 
+type Storage = { tid: string[], boligtype: string | undefined, contentscode: string | undefined }[]
+
 function App() {
   const [data, setData] = useState<any>();
   const [loading, setLoading] = useState<Boolean>(true);
@@ -39,7 +41,6 @@ function App() {
         setBoligtypes(variables[0]);
         setContentscodes(variables[1]);
         setTids(variables[2]);
-        setLoading(false);
       })
       .catch((error) => {
         setError(error);
@@ -81,8 +82,14 @@ function App() {
     axios.post('https://data.ssb.no/api/v0/en/table/07241', JSON.stringify(query))
       .then(({ data }) => {
         setData(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setError(error);
+        setLoading(false);
       })
   }, [boligtype, contentscode, tid?.length]);
+
   const changeBoligtype = (event: SelectChangeEvent) => {
     setBoligtype(event.target.value as string);
   }
@@ -93,6 +100,12 @@ function App() {
     setTid(event.target.value as unknown as string[]);
   }
 
+  const rememberStateInLocalStorage = () => {
+    const storage: Storage = JSON.parse(localStorage.getItem('storage') || "[]")
+    storage.push({ tid, boligtype, contentscode })
+    localStorage.setItem('storage', JSON.stringify(storage))
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
@@ -100,7 +113,7 @@ function App() {
 
   return (
     <Grid container spacing={2}>
-      <Grid item xs={4} sx={sxProps}>
+      <Grid item xs={3} sx={sxProps}>
         <FormControl fullWidth>
           <InputLabel id="Boligtype">Type of dwelling</InputLabel>
           <Select labelId="Boligtype" label="Type of dwelling" value={boligtype} onChange={changeBoligtype}>
@@ -108,7 +121,7 @@ function App() {
           </Select>
         </FormControl>
       </Grid>
-      <Grid item xs={4} sx={sxProps}>
+      <Grid item xs={3} sx={sxProps}>
         <FormControl fullWidth>
           <InputLabel id="ContentsCode">Contents</InputLabel>
           <Select labelId="ContentsCode" label="Contents" value={contentscode} onChange={changeContentscode}>
@@ -116,7 +129,7 @@ function App() {
           </Select>
         </FormControl>
       </Grid>
-      <Grid item xs={4} sx={sxProps}>
+      <Grid item xs={3} sx={sxProps}>
         <FormControl fullWidth>
           <InputLabel id="Tid">Quarter</InputLabel>
           {/* @ts-ignore */}
@@ -124,6 +137,9 @@ function App() {
             {tids.values.map((va: string, i: number) => <MenuItem value={va}>{tids.valueTexts[i]}</MenuItem>)}
           </Select>
         </FormControl>
+      </Grid>
+      <Grid item xs={3} sx={sxProps}>
+        <Button variant="outlined" onClick={rememberStateInLocalStorage}>Save search</Button>
       </Grid>
       <Grid item xs={12}>
       <HighchartsReact
